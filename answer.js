@@ -435,3 +435,75 @@ function parseAnswer8() {
 
     document.getElementById('result').innerHTML = guards[0].id * guards[0].bestMinute;
 }
+
+function parseAnswer9() {
+    const t0 = performance.now();
+    let input = document.getElementById('input').value;
+    let errorsPresent = true;
+    let index = 0;
+
+    while (errorsPresent) {
+
+        if (index > 0 && (input.charCodeAt(index) - input.charCodeAt(index - 1) === 32 || input.charCodeAt(index) - input.charCodeAt(index - 1) === -32)) {
+            input = input.slice(0, index - 1) + input.slice(index + 1);
+            index = index - 2;
+        }
+
+        if (index >= input.length) {
+            errorsPresent = false;
+        }
+
+        index++;
+    }
+
+    const t1 = performance.now();
+    console.log("Function took " + (t1 - t0) + " milliseconds to complete.");
+    document.getElementById('result').innerHTML = input.length;
+}
+
+function parseAnswer10() {
+    const t0 = performance.now();
+    let puzzleInput = document.getElementById('input').value;
+
+    let shortestAnswer = 999999;
+    let alphabet = "abcdefghijklmnopqrstuvwxyz".split('');
+
+    for(let i = 0; i < alphabet.length; i++){
+        reactInput(preReactInput(alphabet[i]));
+        //preReactInput(alphabet[i]);
+    }
+
+    function preReactInput(withLetter){
+        const pattern = "(" + withLetter.toLocaleUpperCase() + "|" + withLetter + ")";
+        const rex = new RegExp(pattern, "g");
+        return puzzleInput.replace(rex, '');
+    }
+
+    function reactInput(input){
+        let errorsPresent = true;
+        let index = 0;
+        
+        while (errorsPresent) {
+
+            if (index > 0 && (input.charCodeAt(index) - input.charCodeAt(index - 1) === 32 || input.charCodeAt(index) - input.charCodeAt(index - 1) === -32)) {
+                input = input.slice(0, index - 1) + input.slice(index + 1);
+                index = index - 2;
+            }
+    
+            if (index >= input.length) {
+                errorsPresent = false;
+            }
+    
+            index++;
+        }     
+        
+        if(input.length < shortestAnswer){
+            shortestAnswer = input.length;
+        }
+    }
+
+
+    const t1 = performance.now();
+    console.log("Function took " + (t1 - t0) + " milliseconds to complete.");
+    document.getElementById('result').innerHTML = shortestAnswer;
+}
