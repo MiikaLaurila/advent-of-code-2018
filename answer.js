@@ -461,44 +461,87 @@ function parseAnswer9() {
     document.getElementById('result').innerHTML = input.length;
 }
 
-function parseAnswer10() {
+function parseAnswer10WithWorkers() {
+    const t0 = performance.now();
+    let puzzleInput = document.getElementById('input').value;
+
+    let shortestAnswer = 999999;
+    let alphabet = "abcdefghijklmnopqrstuvwxyz".split('');
+    //let alphabet = "a".split('');
+    let lettersLeft = alphabet.length;
+    let lettersSolved = 0;
+    let workers = [];
+
+    var closeWorkers = function () {
+        workers.forEach(worker => {
+            worker.postMessage(["", "", "close"]);
+        });
+    }
+
+    for (let i = 0; i < 6; i++) {
+        // let td0 = performance.now();
+
+        let worker = new Worker('worker.js');
+        workers.push(worker);
+
+        worker.addEventListener('message', function (e) {
+            //const td1 = performance.now();
+            lettersSolved++;
+            //console.log("Worker " + i + " took " + (td1 - td0) + " milliseconds to complete.");
+
+            if (e.data < shortestAnswer) {
+                shortestAnswer = e.data;
+            }
+
+            if (lettersSolved === alphabet.length) {
+                const t1 = performance.now();
+                console.log("Function took " + (t1 - t0) + " milliseconds to complete.");
+                document.getElementById('result').innerHTML = shortestAnswer;
+                closeWorkers();
+            } else if (alphabet[lettersLeft - 1]) {
+
+                //td0 = performance.now();
+                worker.postMessage([alphabet[lettersLeft - 1], puzzleInput]);
+                lettersLeft--;
+            }
+        });
+
+        worker.postMessage([alphabet[lettersLeft - 1], puzzleInput]);
+        lettersLeft--;
+    }
+
+}
+
+function parseAnswer10NoWorkers() {
     const t0 = performance.now();
     let puzzleInput = document.getElementById('input').value;
 
     let shortestAnswer = 999999;
     let alphabet = "abcdefghijklmnopqrstuvwxyz".split('');
 
-    for(let i = 0; i < alphabet.length; i++){
+    for (let i = 0; i < alphabet.length; i++) {
         reactInput(preReactInput(alphabet[i]));
-        //preReactInput(alphabet[i]);
     }
 
-    function preReactInput(withLetter){
+    function preReactInput(withLetter) {
         const pattern = "(" + withLetter.toLocaleUpperCase() + "|" + withLetter + ")";
         const rex = new RegExp(pattern, "g");
         return puzzleInput.replace(rex, '');
     }
 
-    function reactInput(input){
-        let errorsPresent = true;
-        let index = 0;
-        
-        while (errorsPresent) {
+    function reactInput(input) {
+        let stack = [];
+        input.split('').forEach(char => {
+            // (c) /u/apazzolini
+            if (!stack.length || (stack[stack.length - 1].charCodeAt() ^ char.charCodeAt()) !== 32) {
+                stack.push(char)
+            } else {
+                stack.pop()
+            }
+        });
 
-            if (index > 0 && (input.charCodeAt(index) - input.charCodeAt(index - 1) === 32 || input.charCodeAt(index) - input.charCodeAt(index - 1) === -32)) {
-                input = input.slice(0, index - 1) + input.slice(index + 1);
-                index = index - 2;
-            }
-    
-            if (index >= input.length) {
-                errorsPresent = false;
-            }
-    
-            index++;
-        }     
-        
-        if(input.length < shortestAnswer){
-            shortestAnswer = input.length;
+        if(stack.length < shortestAnswer){
+            shortestAnswer = stack.length;
         }
     }
 
